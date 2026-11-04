@@ -1,0 +1,35 @@
+version: '3.8'
+services:
+  frontend:
+    image: lizzik07/restaurant-frontend:latest
+    networks:
+      - restaurant_net
+    deploy:
+      replicas: 2 # Запускаем 2 копии для надежности
+
+  backend:
+    image: lizzik07/restaurant-backend:latest
+    volumes:
+      - ./db:/var/www/html/db
+    networks:
+      - restaurant_net
+    depends_on:
+      - db
+
+  db:
+    image: lizzik07/restaurant-db:latest
+    volumes:
+      - ./db:/dbdata
+    networks:
+      - restaurant_net
+
+  proxy:
+    image: lizzik07/restaurant-proxy:latest
+    ports:
+      - "8081:80" # Порт 8081, чтобы не мешать нашему работающему Compose на 8080
+    networks:
+      - restaurant_net
+
+networks:
+  restaurant_net:
+    driver: overlay # Для Swarm используется сеть типа overlay
