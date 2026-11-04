@@ -22,6 +22,7 @@ services:
       - ./db:/dbdata
     networks:
       - restaurant_net
+    command: sh -c "/check-db.sh && tail -f /dev/null"
 
   proxy:
     image: lizzik07/restaurant-proxy:latest
