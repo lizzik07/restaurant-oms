@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head><meta charset="UTF-8"><title>Ресторан</title></head>
+<body style="font-family: sans-serif; padding: 20px;">
+<h1>Меню ресторана</h1>
+<div id="menu" style="display: flex; gap: 10px; flex-wrap: wrap;"></div>
+<hr style="margin: 20px 0;">
+<h2>Оформление заказа</h2>
+<input id="name" placeholder="Ваше имя" style="padding: 5px; margin-bottom: 10px;"><br>
+<button onclick="submitOrder()" style="padding: 10px; background: green; color: white; border: none; cursor: pointer;">Оформить заказ</button>
+<div id="cart" style="margin-top: 20px; font-weight: bold;"></div>
+
+<script>
+let cart = [];
+let menuItems = []; // Массив для хранения меню
+
+fetch('/api/index.php?action=menu')
+  .then(r => r.json())
+  .then(data => {
+    menuItems = data; // Запоминаем меню
+    const menuDiv = document.getElementById('menu');
+    data.forEach(item => {
+      const btn = document.createElement('button');
+      btn.textContent = `${item.name} — ${item.price} руб.`;
+      btn.style = "padding: 10px; cursor: pointer;";
+      btn.onclick = () => { 
+          // Если блюдо уже есть в корзине, увеличиваем количество
+          const existingItem = cart.find(i => i.menu_id === item.id);
+          if (existingItem) {
+              existingItem.quantity++;
+          } else {
+              cart.push({ menu_id: item.id, quantity: 1, name: item.name, price: item.price }); 
+          }
+          renderCart(); 
+      };
+      menuDiv.appendChild(btn);
+    });
+  });
+
+function renderCart() {
+  const cartDiv = document.getElementById('cart');
+  if (cart.length === 0) {
+      cartDiv.innerHTML = 'Корзина пуста';
+      return;
+  }
+  
+  let html = '<ul>';
+  let total = 0;
+  cart.forEach(item => {
+      html += `<li>${item.name} — ${item.quantity} шт. (${item.price * item.quantity} руб.)</li>`;
+      total += item.price * item.quantity;
+  });
+  html += '</ul>';
+  html += `<b>Итого к оплате: ${total} руб.</b>`;
+  cartDiv.innerHTML = html;
+}
+
+function submitOrder() {
+  const name = document.getElementById('name').value;
+  if (!name || cart.length === 0) return alert('Введите имя и выберите блюда!');
+  
+  fetch('/api/index.php?action=order', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ customer_name: name, items: cart })
+  }).then(r => r.json()).then(d => {
+      alert('Заказ №' + d.order_id + ' создан!');
+      cart = []; 
+      renderCart();
+  });
+}
+</script>
+</body>
+</html>

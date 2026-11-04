@@ -1,0 +1,39 @@
+services:
+  frontend:
+    build: ./frontend
+    container_name: restaurant_frontend
+    networks:
+      - restaurant_net
+
+  backend:
+    build: ./backend
+    container_name: restaurant_backend
+    volumes:
+      - ./db:/var/www/html/db
+    networks:
+      - restaurant_net
+    depends_on:
+      - db
+
+  db:
+    build: ./db
+    container_name: restaurant_db
+    volumes:
+      - ./db:/dbdata
+    networks:
+      - restaurant_net
+
+  proxy:
+    build: ./proxy
+    container_name: restaurant_proxy
+    ports:
+      - "8080:80"
+    networks:
+      - restaurant_net
+    depends_on:
+      - frontend
+      - backend
+
+networks:
+  restaurant_net:
+    driver: bridge
